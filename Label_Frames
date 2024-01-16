@@ -1,0 +1,109 @@
+def label_frames(json_path, total_frames):
+    # Load JSON file and label frames as "presnap" "postsnap"
+    with open(json_path, 'r') as json_file:
+        data = json.load(json_file)
+
+    labels = np.zeros(total_frames, dtype=int)  # Initialize labels with zeros
+
+    for item in data['items']:
+        if 'attr' in item and 'frame' in item['attr']:
+            frame_id = int(item['attr']['frame'])
+            if frame_id < total_frames:  # Check if frame_id is within bounds
+                label_id = item['annotations'][0]['label_id']
+                labels[frame_id] = label_id
+
+    return labels
+
+# Take same id attributes and frames and start assigning labels to bounding boxes for positions and figure out how that will work, similar to how Danny did in the previous script
+
+import json
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Function to calculate the center of a bounding box
+def calculate_center(bbox):
+    return (bbox[0] + bbox[2] / 2, bbox[1] + bbox[3] / 2)
+
+# Function to plot a player as a dot on the 2D grid
+def plot_player(ax, center, color):
+    ax.plot(center[0], center[1], marker='o', markersize=8, color=color)
+
+# Read JSON file
+json_filename = 'C:\\Users\\drewt\\Documents\\default.json'
+video_filename = 'C:\\Users\\drewt\\Documents\\WideWide-Clip006.mp4'
+
+# Define label_id to color mapping
+label_id_colors = {
+    1: 'red',  # Example: Blue color for label_id 1
+    2: 'red',
+    3: 'red',
+    4: 'red',
+    5: 'red',
+    6: 'red',
+    7: 'blue',
+    8: 'blue',
+    9: 'blue',
+    10: 'blue',
+    11: 'blue',
+    12: 'blue',
+    13: 'blue',
+    14: 'blue',
+    15: 'blue',
+    16: 'blue',
+    17: 'blue',
+    18: 'red',
+    19: 'red',
+    20: 'red',
+    21: 'red',
+    22: 'red',
+    23: 'red',
+    24: 'red',
+    25: 'red',
+    26: 'red',
+    27: 'red',
+    28: 'red' # Add more mappings as needed
+}
+
+with open(json_filename, 'r') as file:
+    data = json.load(file)
+
+# Read video
+cap = cv2.VideoCapture(video_filename)
+
+# Create a figure for plotting
+fig, ax = plt.subplots()
+
+#Create total frames to assign against json
+total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+labels = np.zeros(total_frames, dtype=int)  # Initialize labels with zeros
+for frame_data in range(1, total_frames):
+    frame_number = frame_data['attr']['frame']
+    annotations = frame_data['annotations']
+    print(frame_data)
+
+
+    # Process annotations for each frame
+    for annotation in annotations:
+        if annotation['type'] == 'bbox':
+            label_id = annotation['label_id']
+            bbox = annotation['bbox']
+
+            # Calculate center position
+            center = calculate_center(bbox)
+
+            # Get color based on label_id
+            color = label_id_colors.get(label_id, 'black')  # Default to black if label_id not in the mapping
+
+            # Plot player as a dot
+            plot_player(ax, center, color)
+
+# Set axis limits based on the field size (you may need to adapt this)
+ax.set_xlim(0, 1280)
+ax.set_ylim(0, 720)
+
+# Show the plot
+plt.show()
+
+# Release the video capture object
+cap.release()
